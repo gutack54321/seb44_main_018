@@ -28,9 +28,46 @@ public class SwaggerConfig {
     }
 
     @Bean
+    public Docket swaggerApi4(){
+        return new Docket(DocumentationType.OAS_30)
+                .useDefaultResponseMessages(false)
+                .consumes(getConsumeContentTypes())
+                .produces(getProduceContentTypes())
+                .securityContexts(List.of(this.securityContext())) // SecurityContext 설정
+                .securitySchemes(List.of(this.apiKey())) // ApiKey 설정
+                .groupName("Feed API")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.saecdo18.petmily.feed.controller"))
+                .paths(PathSelectors.any())
+                .build()
+                .apiInfo(mySwaggerInfo());
+    }
+
+    @Bean
+    public Docket swaggerApi3(){
+        return new Docket(DocumentationType.OAS_30)
+                .useDefaultResponseMessages(false)
+                .consumes(getConsumeContentTypes())
+                .produces(getProduceContentTypes())
+                .securityContexts(List.of(this.securityContext())) // SecurityContext 설정
+                .securitySchemes(List.of(this.apiKey())) // ApiKey 설정
+                .groupName("Pet API")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.saecdo18.petmily.pet.controller"))
+                .paths(PathSelectors.any())
+                .build()
+                .apiInfo(mySwaggerInfo());
+    }
+
+    @Bean
     public Docket swaggerApi2(){
         return new Docket(DocumentationType.OAS_30)
-                .groupName("API 2")
+                .useDefaultResponseMessages(false)
+                .consumes(getConsumeContentTypes())
+                .produces(getProduceContentTypes())
+                .securityContexts(List.of(this.securityContext())) // SecurityContext 설정
+                .securitySchemes(List.of(this.apiKey())) // ApiKey 설정
+                .groupName("WalkMate API")
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.saecdo18.petmily.walkmate.controller"))
                 .paths(PathSelectors.any())
@@ -39,15 +76,16 @@ public class SwaggerConfig {
     }
     @Bean
     public Docket swaggerApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
+        return new Docket(DocumentationType.OAS_30)
                 .useDefaultResponseMessages(false)
                 .consumes(getConsumeContentTypes())
                 .produces(getProduceContentTypes())
                 .securityContexts(List.of(this.securityContext())) // SecurityContext 설정
                 .securitySchemes(List.of(this.apiKey())) // ApiKey 설정
+                .groupName("Member API")
                 .select()
-//                .apis(RequestHandlerSelectors.basePackage("com.saecdo18.serverapplication.member.controller"))
-                .apis(RequestHandlerSelectors.any())
+                .apis(RequestHandlerSelectors.basePackage("com.saecdo18.petmily.member.controller"))
+//                .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.any())
                 .build()
 //                .pathMapping("/api")
