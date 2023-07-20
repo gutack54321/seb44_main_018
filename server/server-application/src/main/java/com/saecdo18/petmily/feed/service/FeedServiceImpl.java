@@ -93,7 +93,7 @@ public class FeedServiceImpl implements FeedService {
         List<Feed> feedList = new ArrayList<>();
         long totalCount = feedRepository.count();
         log.info("totalCount : {}@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",totalCount);
-        Set<String> previousIds = getToRedis(memberId);
+        Set<String> previousIds = getToRedis(memberId);//
         log.info("previousIds : {}@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",previousIds);
 
         while (feedList.size() < size) {
