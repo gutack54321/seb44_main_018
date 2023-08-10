@@ -309,7 +309,7 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("팔로잉 신청 성공")
+    @DisplayName("팔로잉 신청 성공: follow 사용자2 -> 사용자1")
     void followMemberSuccess() {
 
         long memberId = 1L;
@@ -337,16 +337,61 @@ class MemberServiceTest {
 
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
-        given(followMemberRepository.findByFollowerMemberAndFollowingId(Mockito.any(Member.class), Mockito.anyLong())).willReturn(Optional.of(followMember));
+        given(followMemberRepository.findByFollowerMemberAndFollowingId(Mockito.any(Member.class), Mockito.anyLong())).willReturn(Optional.empty()); //팔로우테이블에 없다면 팔로우 진행
         given(followMemberMapper.followMemberToFollowMemberResponseDto(Mockito.any(FollowMember.class))).willReturn(followMemberResponse);
 
 
         // when
-        memberService.followMember(memberId, followingId);
+        FollowMemberDto.Response result = memberService.followMember(memberId, followingId);
 
 
         verify(memberRepository, times(2)).findById(memberId);
 
+        assertEquals(result.getMemberInfo().getMemberId(), memberId); //팔로잉 된 follower 회원 아이디
+        assertEquals(result.isFollow(), true);  // follow 상태
+    }
+
+    @Test
+    @DisplayName("언팔로잉 신청 성공: follow 사용자2 -> 사용자1")
+    void nuFollowMemberSuccess() {
+
+        long memberId = 1L;
+
+        long followingId = 2L;
+
+        Member member = new Member();
+        ReflectionTestUtils.setField(member, "memberId", memberId);
+
+        MemberDto.Response memberResponse = MemberDto.Response.builder()
+                .build();
+
+        MemberDto.Info memberInfo = MemberDto.Info.builder()
+                .memberId(1L)
+                .build();
+
+        FollowMember followMember = new FollowMember();
+        ReflectionTestUtils.setField(followMember, "followerMember", member);
+        ReflectionTestUtils.setField(followMember, "followingId", followingId);
+
+        FollowMemberDto.Response followMemberResponse = FollowMemberDto.Response.builder()
+                .memberInfo(memberInfo)
+                .build();
+
+
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
+        given(followMemberRepository.findByFollowerMemberAndFollowingId(Mockito.any(Member.class), Mockito.anyLong())).willReturn(Optional.of(followMember)); //팔로우테이블에 있다면 언팔로우 진행
+        given(followMemberMapper.followMemberToFollowMemberResponseDto(Mockito.any(FollowMember.class))).willReturn(followMemberResponse);
+
+
+        // when
+        FollowMemberDto.Response result = memberService.followMember(memberId, followingId);
+
+
+        verify(memberRepository, times(2)).findById(memberId);
+
+        assertEquals(result.getMemberInfo().getMemberId(), memberId); //언팔로우 된 follower 회원 아이디
+        assertEquals(result.isFollow(), false); // follow 상태
     }
 
     @Test
@@ -417,8 +462,25 @@ class MemberServiceTest {
         given(followMemberMapper.followMemberToFollowMemberResponseDto(Mockito.any(FollowMember.class))).willReturn(followMemberResponse);
 
         // when
-        memberService.followList(followingId);
+        List<FollowMemberDto.Response> result = memberService.followList(followingId);
 
+        assertEquals(result.get(0).getMemberInfo().getMemberId(), memberId); //followingId가 팔로우한 멤버 아이디
+    }
+
+    @Test
+    @DisplayName("팔로잉 리스트 가져오기 성공: 팔로잉한게 없어서 빈리스트로 출력")
+    void followListEmptySuccess() {
+
+        long followingId = 2L;
+
+        List<FollowMember> followMemberList = new ArrayList<>();
+
+        given(followMemberRepository.findByFollowingId(Mockito.anyLong())).willReturn(Optional.of(followMemberList));
+
+        // when
+        List<FollowMemberDto.Response> result = memberService.followList(followingId);
+
+        assertEquals(result.size(), 0); //followingId가 팔로우한 멤버 아이디
     }
 
     @Test

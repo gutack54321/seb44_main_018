@@ -25,7 +25,7 @@ spring:
 cloud:
   aws:
     s3:
-      bucket: main-project-junyoung
+      bucket: sharepetment
     credentials:
       access-key: ${ACCESS_KEY}
       secret-key: ${SECRET_KEY}
@@ -39,7 +39,7 @@ cloud:
 jwt:
   secretKey: SDFJSDLKJFSDIFOJSDIFSDLFJSDKFJLSDJFLSDKJFSDIFJLJSDKJFSDLKJF
   access:
-    expiration: 3600000000
+    expiration: 90000000
     header: Authorization
   refresh:
     expiration: 1209600000
