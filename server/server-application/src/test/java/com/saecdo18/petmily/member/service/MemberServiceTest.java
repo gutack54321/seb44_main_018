@@ -62,8 +62,8 @@ class MemberServiceTest {
     private FollowMemberMapper followMemberMapper;
 
     @Test
-    @DisplayName("회원 조회 성공")
-    void getMemberSuccess() {
+    @DisplayName("회원 조회 성공: follow 사용자2 -> 사용자1")
+    void getMemberSuccessFollow() {
 
 
         long hostMemberId = 1L;
@@ -96,17 +96,12 @@ class MemberServiceTest {
                 .uploadFileURL("http://image.jpg")
                 .build();
 
-        FollowMember followMember = new FollowMember();
+        FollowMember followMember = new FollowMember();   //게스트가 팔로우 중
         ReflectionTestUtils.setField(followMember, "followerMember", hostMember);
         ReflectionTestUtils.setField(followMember, "followingId", guestMemberId);
 
         MemberDto.Response memberResponse = MemberDto.Response.builder()
                 .build();
-
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
-
 
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
         given(petRepository.findByMember(Mockito.any(Member.class))).willReturn(petList);
@@ -118,16 +113,22 @@ class MemberServiceTest {
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
 
         // when
-        memberService.getMember(hostMemberId, guestMemberId);
+        MemberDto.Response result = memberService.getMember(hostMemberId, guestMemberId);
 
 
         verify(memberRepository, times(2)).findById(hostMemberId);
         verify(petRepository, times(1)).findByMember(hostMember);
+
+        assertEquals(result.isGuestFollow(), true); //팔로우 상태
+        assertEquals(result.getMemberInfo().getMemberId(), hostMemberId); //호스트 회원 아이디
+        assertEquals(result.getPets().size(), 1);  //반려동물 리스트 크기
+        assertEquals(result.getPets().get(0).getName(), "메시");  //반려동물 중 첫번째 반려동물 이름
+
     }
 
     @Test
-    @DisplayName("회원 조회 실패 : 찾는 멤버가 없어서 생기는 예외")
-    void getMemberNoneHostMember() {
+    @DisplayName("회원 조회 성공: unfollow 사용자2 -> 사용자1")
+    void getMemberSuccessUnfollow() {
 
 
         long hostMemberId = 1L;
@@ -160,6 +161,43 @@ class MemberServiceTest {
                 .uploadFileURL("http://image.jpg")
                 .build();
 
+        MemberDto.Response memberResponse = MemberDto.Response.builder()
+                .build();
+
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
+        given(petRepository.findByMember(Mockito.any(Member.class))).willReturn(petList);
+        given(petMapper.petToPetResponseDto(Mockito.any(Pet.class))).willReturn(petResponse);
+        given(petImageRepository.findByPet(Mockito.any(Pet.class))).willReturn(petImage);
+        given(petMapper.imageToImageDto(Mockito.any(Image.class))).willReturn(imageDto);
+        given(followMemberRepository.findByFollowerMemberAndFollowingId(Mockito.any(Member.class), Mockito.anyLong())).willReturn(Optional.empty()); //게스트가 호스트 팔로우하진 않은 상태
+        given(memberMapper.memberToMemberResponseDto(Mockito.any(Member.class))).willReturn(memberResponse);
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
+
+        // when
+        MemberDto.Response result = memberService.getMember(hostMemberId, guestMemberId);
+
+
+        verify(memberRepository, times(2)).findById(hostMemberId);
+        verify(petRepository, times(1)).findByMember(hostMember);
+
+        assertEquals(result.isGuestFollow(), false);  //게스트 팔로우 상태
+        assertEquals(result.getMemberInfo().getMemberId(), hostMemberId); //호스트 회원 아이디
+        assertEquals(result.getMemberInfo().getMemberId(), 1L); //호스트 회원 아이디
+    }
+
+    @Test
+    @DisplayName("회원 조회 성공 : 찾는 반려동물이 없어서 빈리스트로 조회")
+    void getMemberSuccessNonePet() {
+
+        long hostMemberId = 1L;
+        long guestMemberId = 2L;
+
+        Member hostMember = new Member();
+        ReflectionTestUtils.setField(hostMember, "memberId", hostMemberId);
+
+        List<Pet> petList = new ArrayList<>();
+
+
         FollowMember followMember = new FollowMember();
         ReflectionTestUtils.setField(followMember, "followerMember", hostMember);
         ReflectionTestUtils.setField(followMember, "followingId", guestMemberId);
@@ -167,10 +205,32 @@ class MemberServiceTest {
         MemberDto.Response memberResponse = MemberDto.Response.builder()
                 .build();
 
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
+        given(petRepository.findByMember(Mockito.any(Member.class))).willReturn(petList);
 
+        given(followMemberRepository.findByFollowerMemberAndFollowingId(Mockito.any(Member.class), Mockito.anyLong())).willReturn(Optional.of(followMember));
+        given(memberMapper.memberToMemberResponseDto(Mockito.any(Member.class))).willReturn(memberResponse);
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(hostMember));
+
+        // when
+        MemberDto.Response result = memberService.getMember(hostMemberId, guestMemberId);
+
+
+        verify(memberRepository, times(2)).findById(hostMemberId);
+        verify(petRepository, times(1)).findByMember(hostMember);
+
+        assertEquals(result.getMemberInfo().getMemberId(), hostMemberId); //호스트 회원 아이디
+        assertEquals(result.getPets().size(), 0);  //반려동물 없을 경우 빈리스트 출력
+
+    }
+
+    @Test
+    @DisplayName("회원 조회 실패 : 찾는 멤버가 없어서 생기는 예외")
+    void getMemberNoneHostMember() {
+
+
+        long hostMemberId = 1L;
+        long guestMemberId = 2L;
 
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.empty());
         RuntimeException exception = assertThrows(RuntimeException.class , () -> memberService.getMember(hostMemberId, guestMemberId));
@@ -183,31 +243,43 @@ class MemberServiceTest {
     void updateMemberStatusSuccess() {
 
         long memberId = 1L;
-        String nickname = "닉네임";
+        String exNickname="수정하기전닉네임";
+        String exAddress="서울시 강서구 수정동";
+        String nickname = "수정된 닉네임";
         String address = "서울시 강서구 마곡동";
 
         Member member = new Member();
         ReflectionTestUtils.setField(member, "memberId", memberId);
-
-        MemberDto.Response memberResponse = MemberDto.Response.builder()
-                .build();
+        ReflectionTestUtils.setField(member, "nickname", exNickname);
+        ReflectionTestUtils.setField(member, "address", exAddress);
 
         MemberDto.Info memberInfo = MemberDto.Info.builder()
                 .memberId(1L)
+                .nickname(nickname)
+                .build();
+
+        MemberDto.Response memberResponse = MemberDto.Response.builder()
+                .address(address)
+                .memberInfo(memberInfo)
                 .build();
 
 
-        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
-        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
-        given(memberMapper.memberToMemberResponseDto(Mockito.any(Member.class))).willReturn(memberResponse);
+
+
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member)); // 처음 존재하는 회원인지 찾음
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member)); //회원을 memberDto.Info로 변환할 때 다시 회원인지 찾음
+        given(memberMapper.memberToMemberResponseDto(Mockito.any(Member.class))).willReturn(memberResponse);  //엔티티를 디티오로 변환
 
 
         // when
-        memberService.updateMemberStatus(memberId, nickname, address);
+        MemberDto.Response result = memberService.updateMemberStatus(memberId, nickname, address);
 
 
         verify(memberRepository, times(2)).findById(memberId);
 
+        assertEquals(result.getMemberInfo().getMemberId(), memberId); //수정한 회원아이디
+        assertEquals(result.getAddress(), address); //수정된 주소지
+        assertEquals(result.getMemberInfo().getNickname(), nickname); //수정된 주소지
     }
 
     @Test
