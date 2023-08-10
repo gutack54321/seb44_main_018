@@ -480,7 +480,7 @@ class MemberServiceTest {
         // when
         List<FollowMemberDto.Response> result = memberService.followList(followingId);
 
-        assertEquals(result.size(), 0); //followingId가 팔로우한 멤버 아이디
+        assertEquals(result.size(), 0); //팔로우가 없어 빈리스트
     }
 
     @Test
@@ -526,14 +526,16 @@ class MemberServiceTest {
         long memberId = 1L;
         long petId = 1L;
         long followingId = 2L;
+        String imageURL = "http://aaaaaaaaaaaa";
 
         Member member = new Member();
         ReflectionTestUtils.setField(member, "memberId", memberId);
+        ReflectionTestUtils.setField(member, "imageURL", "http://bbbbbbbbbbbb");
 
         Image image = new Image();
         ReflectionTestUtils.setField(image, "imageId", 1L);
         ReflectionTestUtils.setField(image, "originalFilename", "xmrqufgkstkwls.png");
-        ReflectionTestUtils.setField(image, "uploadFileURL", "http://adfjeiiv.dkjfibj");
+        ReflectionTestUtils.setField(image, "uploadFileURL", "http://aaaaaaaaaaaa");
 
         PetImage petImage = new PetImage();
         ReflectionTestUtils.setField(petImage, "PetImageId", 1l);
@@ -569,8 +571,14 @@ class MemberServiceTest {
 
 
         // when
-        memberService.changeImage(memberId, petId);
+        MemberDto.Info result = memberService.changeImage(memberId, petId);
+
+        assertEquals(result.getImageURL(), imageURL); //바뀐 aaaa url로 등록됨
     }
+
+    @Test
+    @DisplayName("회원의 이미지 변경 (자신의 반려동물 중 선택하면 반려동물의 프로필로 회원의 이미지가 바뀜) : 찾는 반려동물이 없어서 생기는 경우")
+    void changeImageNonePet() {}
 
     @Test
     @DisplayName("회원의 이미지 변경 실패(자신의 반려동물 중 선택하면 반려동물의 프로필로 회원의 이미지가 바뀜) : 찾는 멤버가 없어서 생기는 예외")
@@ -578,43 +586,6 @@ class MemberServiceTest {
 
         long memberId = 1L;
         long petId = 1L;
-        long followingId = 2L;
-
-        Member member = new Member();
-        ReflectionTestUtils.setField(member, "memberId", memberId);
-
-        Image image = new Image();
-        ReflectionTestUtils.setField(image, "imageId", 1L);
-        ReflectionTestUtils.setField(image, "originalFilename", "xmrqufgkstkwls.png");
-        ReflectionTestUtils.setField(image, "uploadFileURL", "http://adfjeiiv.dkjfibj");
-
-        PetImage petImage = new PetImage();
-        ReflectionTestUtils.setField(petImage, "PetImageId", 1l);
-        ReflectionTestUtils.setField(petImage, "image", image);
-
-        Pet pet = new Pet();
-        ReflectionTestUtils.setField(pet, "petId", 1L);
-        ReflectionTestUtils.setField(pet, "name", "메시");
-        ReflectionTestUtils.setField(pet, "member", member);
-        ReflectionTestUtils.setField(pet, "petImage", petImage);
-
-        MemberDto.Response memberResponse = MemberDto.Response.builder()
-                .build();
-
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
-
-
-        FollowMember followMember = new FollowMember();
-        ReflectionTestUtils.setField(followMember, "followerMember", member);
-        ReflectionTestUtils.setField(followMember, "followingId", followingId);
-
-        List<FollowMember> followMemberList = List.of(followMember);
-
-        FollowMemberDto.Response followMemberResponse = FollowMemberDto.Response.builder()
-                .memberInfo(memberInfo)
-                .build();
 
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.empty());
         RuntimeException exception = assertThrows(RuntimeException.class, () -> memberService.changeImage(memberId, petId));
@@ -629,8 +600,23 @@ class MemberServiceTest {
         long memberId = 1L;
         String nickname= "testnick";
 
+        given(memberRepository.findByNickname(Mockito.anyString())).willReturn(Optional.empty());
+
+        // when
+        MemberDto.NickCheckResponse result = memberService.checkNickname(nickname);
+
+        assertEquals(result.getCheckMessage(), "사용가능한 닉네임입니다");
+    }
+
+    @Test
+    @DisplayName("닉네임이 중복되지 않아 사용이 가능한 경우")
+    void checkNicknameCantUse() {
+        long memberId = 1L;
+        String nickname= "testnick";
+
         Member member = new Member();
         ReflectionTestUtils.setField(member, "memberId", memberId);
+        ReflectionTestUtils.setField(member, "nickname", nickname);
 
 
         MemberDto.Response memberResponse = MemberDto.Response.builder()
@@ -646,28 +632,9 @@ class MemberServiceTest {
 
 
         // when
-        memberService.checkNickname(nickname);
+        MemberDto.NickCheckResponse result = memberService.checkNickname(nickname);
+
+        assertEquals(result.getCheckMessage(), "중복된 닉네임입니다");
     }
 
-    @Test
-    @DisplayName("닉네임이 중복되어 사용이 불가능한 경우")
-    void checkNicknameCantUse() {
-        long memberId = 1L;
-        String nickname= "testnick";
-
-        Member member = new Member();
-        ReflectionTestUtils.setField(member, "memberId", memberId);
-
-        MemberDto.Response memberResponse = MemberDto.Response.builder()
-                .build();
-
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
-
-        given(memberRepository.findByNickname(Mockito.anyString())).willReturn(Optional.empty());
-
-        // when
-        memberService.checkNickname(nickname);
-    }
 }
