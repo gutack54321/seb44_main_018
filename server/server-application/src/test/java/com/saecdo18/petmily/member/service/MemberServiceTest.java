@@ -577,11 +577,27 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("회원의 이미지 변경 (자신의 반려동물 중 선택하면 반려동물의 프로필로 회원의 이미지가 바뀜) : 찾는 반려동물이 없어서 생기는 경우")
-    void changeImageNonePet() {}
+    @DisplayName("회원의 이미지 변경 실패 : 찾는 반려동물이 없어서 생기는 경우")
+    void changeImageNonePet() {
+        long memberId = 1L;
+        long petId = 1L;
+        long followingId = 2L;
+        String imageURL = "http://aaaaaaaaaaaa";
+
+        Member member = new Member();
+        ReflectionTestUtils.setField(member, "memberId", memberId);
+        ReflectionTestUtils.setField(member, "imageURL", "http://bbbbbbbbbbbb");
+
+
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
+        given(petRepository.findById(Mockito.anyLong())).willReturn(Optional.empty());
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> memberService.changeImage(memberId, petId));
+
+        assertEquals(exception.getMessage(), "펫을 찾을 수 없습니다.");
+    }
 
     @Test
-    @DisplayName("회원의 이미지 변경 실패(자신의 반려동물 중 선택하면 반려동물의 프로필로 회원의 이미지가 바뀜) : 찾는 멤버가 없어서 생기는 예외")
+    @DisplayName("회원의 이미지 변경 실패 : 찾는 멤버가 없어서 생기는 예외")
     void changeImageNoneMember() {
 
         long memberId = 1L;
