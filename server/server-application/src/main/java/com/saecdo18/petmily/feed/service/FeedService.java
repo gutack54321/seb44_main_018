@@ -11,17 +11,17 @@ import java.util.List;
 
 public interface FeedService {
 
-    public FeedDto.Response createFeed(FeedServiceDto.Post post, long memberId) throws IOException;
+    public Long createFeed(FeedServiceDto.Post post, long memberId) throws IOException;
 
-    public FeedDto.Response getFeed(long feedId, long memberId);
+//    public FeedDto.Response getFeed(long feedId, long memberId);
 
-    public FeedDtoList getFeedsRecent(long memberId, int page, int size);
+    public FeedServiceDto.FeedListToServiceDto getFeedsRecent(long memberId, int page, int size);
 
-    public FeedDtoList getFeedsByMember(int page, int size, long memberId);
+    public FeedServiceDto.FeedListToServiceDto getFeedsByMember(int page, int size, long memberId);
 
-    public FeedDtoList getFeedsByMemberFollow(long memberId, int page, int size);
+    public FeedServiceDto.FeedListToServiceDto getFeedsByMemberFollow(long memberId, int page, int size);
 
-    public FeedDto.Response patchFeed(FeedServiceDto.Patch patch, long memberId) throws IOException;
+    public Long patchFeed(FeedServiceDto.Patch patch, long memberId) throws IOException;
 
     public void deleteFeed(long feedId, long memberId);
 

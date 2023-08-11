@@ -55,10 +55,10 @@ public class FeedServiceImpl implements FeedService {
     private final FeedLikeRepository feedLikeRepository;
     private final FeedMapper feedMapper;
     private final RedisTemplate<String, String> redisTemplate;
-    private final static String BASE_URI = "http://43.202.86.53:8080/feeds/all/";
+    private final static String BASE_URI = "http://15.165.146.215:8080/feeds/all/";
 
     @Override
-    public FeedDto.Response createFeed(FeedServiceDto.Post post, long memberId) throws IOException {
+    public Long createFeed(FeedServiceDto.Post post, long memberId) throws IOException {
         Member findMember = methodFindByMemberId(memberId);
         Feed createFeed = Feed.builder()
                 .content(post.getContent())
@@ -72,27 +72,28 @@ public class FeedServiceImpl implements FeedService {
                 saveImage(createFeed, originalFilename, uploadFileURL);
             }
         }
-        Feed saveFeed = feedRepository.saveAndFlush(createFeed);
+        Feed saveFeed = feedRepository.save(createFeed);
+        findMember.upCountFeed();
 
-        findMember.upCountFeed(); // 피드 생성시 해당 멤버 feedCount 증가
-
-        return changeFeedToFeedDtoResponse(saveFeed, findMember.getMemberId());
+        return saveFeed.getFeedId();
     }
 
-    @Override
-    public FeedDto.Response getFeed(long feedId, long memberId) {
-        Feed findFeed = methodFindByFeedId(feedId);
-        return changeFeedToFeedDtoResponse(findFeed, memberId);
-    }
+//    @Override
+//    public FeedDto.Response getFeed(long feedId, long memberId) {
+//        Feed findFeed = methodFindByFeedId(feedId);
+//        return changeFeedToFeedDtoResponse(findFeed, memberId);
+//    }
 
-    public FeedDtoList getFeedsRecentForGuest(int page, int size) {
+    public FeedServiceDto.FeedListToServiceDto getFeedsRecentForGuest(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Feed> feedList = feedRepository.findAll(pageRequest).getContent();
-        return changeFeedListToFeedResponseDto(feedList, 0);
+        return FeedServiceDto.FeedListToServiceDto.builder()
+                .feedList(feedList)
+                .build();
     }
 
     @Override
-    public FeedDtoList getFeedsRecent(long memberId, int page, int size) {
+    public FeedServiceDto.FeedListToServiceDto getFeedsRecent(long memberId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<Feed> feedList = new ArrayList<>();
@@ -101,7 +102,8 @@ public class FeedServiceImpl implements FeedService {
 
 
         while (feedList.size() < size) {
-            List<Feed> pageDataList = feedRepository.findAll(pageRequest).getContent();
+            Page<Feed> feedPage = feedRepository.findAll(pageRequest);
+            List<Feed> pageDataList = feedPage.getContent();
 
             List<Feed> filteredDataList = pageDataList.stream()
                     .filter(data -> !previousIds.contains(data.getFeedId().toString()))
@@ -122,24 +124,27 @@ public class FeedServiceImpl implements FeedService {
         addToRedisSet(feedList, memberId);
 
         Collections.shuffle(feedList);
-        return changeFeedListToFeedResponseDto(feedList, memberId);
+        return FeedServiceDto.FeedListToServiceDto.builder()
+                .feedList(feedList)
+                .build();
     }
 
     @Override
-    public FeedDtoList getFeedsByMember(int page, int size, long memberId) {
+    public FeedServiceDto.FeedListToServiceDto getFeedsByMember(int page, int size, long memberId) {
         Member findMember = methodFindByMemberId(memberId);
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Feed> feedPage = feedRepository.findAllByMemberOrderByCreatedAtDesc(findMember, pageRequest);
         List<Feed> feedList = feedPage.getContent();
 
-        return changeFeedListToFeedResponseDto(feedList, memberId);
+        return FeedServiceDto.FeedListToServiceDto.builder()
+                .feedList(feedList)
+                .build();
     }
 
     @Override
-    public FeedDtoList getFeedsByMemberFollow(long memberId, int page, int size) {
-        List<FollowMember> followMemberList = followMemberRepository.findByFollowingId(memberId)
-                .orElseThrow(() -> new RuntimeException("팔로우한 멤버가 없습니다."));
+    public FeedServiceDto.FeedListToServiceDto getFeedsByMemberFollow(long memberId, int page, int size) {
+        List<FollowMember> followMemberList = followMemberRepository.findByFollowingId(memberId).orElse(Collections.emptyList());
 
         Set<String> previousIds = getToRedis(memberId);
 
@@ -157,21 +162,23 @@ public class FeedServiceImpl implements FeedService {
         Collections.shuffle(feedList);
         addToRedisSet(feedList, memberId);
 
-        return changeFeedListToFeedResponseDto(feedList, memberId);
+        return FeedServiceDto.FeedListToServiceDto.builder()
+                .feedList(feedList)
+                .build();
     }
 
-    private List<Feed> filterFeedsByPreviousListIds(List<Feed> feedList, Set<String> previousIds) {
-        List<Feed> filterFeeds = new ArrayList<>();
-        for (Feed feed : feedList) {
-            if (!previousIds.contains(feed.getFeedId().toString())) {
-                filterFeeds.add(feed);
-            }
-        }
-        return filterFeeds;
-    }
+//    private List<Feed> filterFeedsByPreviousListIds(List<Feed> feedList, Set<String> previousIds) {
+//        List<Feed> filterFeeds = new ArrayList<>();
+//        for (Feed feed : feedList) {
+//            if (!previousIds.contains(feed.getFeedId().toString())) {
+//                filterFeeds.add(feed);
+//            }
+//        }
+//        return filterFeeds;
+//    }
 
     @Override
-    public FeedDto.Response patchFeed(FeedServiceDto.Patch patch, long memberId) throws IOException {
+    public Long patchFeed(FeedServiceDto.Patch patch, long memberId) throws IOException {
         Feed findFeed = methodFindByFeedId(patch.getFeedId());
         if(memberId !=findFeed.getMember().getMemberId())
             throw new IllegalArgumentException("수정할 권한이 없습니다.");
@@ -195,7 +202,7 @@ public class FeedServiceImpl implements FeedService {
             }
         }
 
-        return changeFeedToFeedDtoResponse(findFeed, memberId);
+        return findFeed.getFeedId();
     }
 
     @Override
@@ -310,15 +317,18 @@ public class FeedServiceImpl implements FeedService {
         return feedLike.map(FeedLike::isLike).orElse(false);
     }
 
-    private FeedDto.Response changeFeedToFeedDtoResponse(Feed feed, long memberId) {
+    public FeedDto.Response changeFeedToFeedDtoResponse(Long feedId, long memberId) {
+        Feed feed = methodFindByFeedId(feedId);
         FeedDto.Response response = feedMapper.FeedToFeedDtoResponse(feed);
         List<FeedCommentDto.Response> feedCommentDtoList = methodFindFeedCommentByFeedId(feed.getFeedId());
         if (!feedCommentDtoList.isEmpty()) {
             response.setFeedComments(feedCommentDtoList);
         }
         response.setMemberInfo(memberIdToMemberInfoDto(feed.getMember().getMemberId()));
-        List<FeedImage> feedImageList = feedImageRepository.findByFeed(feed);
-        response.setImages(feedImageToImageDtoList(feedImageList));
+        List<FeedImage> feedImageList = feed.getFeedImageList();
+        if(feedImageList != null)
+            response.setImages(feedImageToImageDtoList(feedImageList));
+
         if (memberId == 0) {
             response.setLike(false);
         } else {
@@ -329,13 +339,14 @@ public class FeedServiceImpl implements FeedService {
         return response;
     }
 
-    private FeedDtoList changeFeedListToFeedResponseDto(List<Feed> feedList, long memberId) {
+    public FeedDtoList changeFeedListToFeedResponseDto(FeedServiceDto.FeedListToServiceDto feedListToServiceDto,
+                                                       long memberId) {
+
         List<FeedDto.Response> responseList = new ArrayList<>();
-        for (Feed feed : feedList) {
-            FeedDto.Response response = changeFeedToFeedDtoResponse(feed, memberId);
+        for (Feed feed : feedListToServiceDto.getFeedList()) {
+            FeedDto.Response response = changeFeedToFeedDtoResponse(feed.getFeedId(), memberId);
             responseList.add(response);
         }
-
 
         return FeedDtoList.builder()
                 .responseList(responseList)
@@ -375,5 +386,16 @@ public class FeedServiceImpl implements FeedService {
     public void deleteRedis(long memberId) {
         String key = memberId + ":Feed";
         redisTemplate.delete(key);
+    }
+
+    public FeedDtoList serviceDtoToFeedDtoList(FeedServiceDto.FeedListToServiceDto feedListToServiceDto) {
+        List<FeedDto.Response> responseList = new ArrayList<>();
+        for (Feed feed : feedListToServiceDto.getFeedList()) {
+            FeedDto.Response response = feedMapper.FeedToFeedDtoResponse(feed);
+            responseList.add(response);
+        }
+        return FeedDtoList.builder()
+                .responseList(responseList)
+                .build();
     }
 }

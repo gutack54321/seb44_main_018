@@ -38,7 +38,7 @@ public class FeedController {
     @GetMapping("/{feed-id}")
     public ResponseEntity<FeedDto.Response> getFeed(@ApiParam("피드 아이디") @PathVariable("feed-id") long feedId) {
         long memberId = authenticationGetMemberId.getMemberId();
-        FeedDto.Response response = feedService.getFeed(feedId, memberId);
+        FeedDto.Response response = feedService.changeFeedToFeedDtoResponse(feedId, memberId);
 
         return ResponseEntity.ok(response);
     }
@@ -48,7 +48,8 @@ public class FeedController {
     public ResponseEntity<FeedDtoList> getFeedsRandom(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                       @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
         long memberId = authenticationGetMemberId.getMemberId();
-        FeedDtoList responseList = feedService.getFeedsRecent(memberId, page, size);
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsRecent(memberId, page, size);
+        FeedDtoList responseList = feedService.changeFeedListToFeedResponseDto(feedListToServiceDto, memberId);
         if(responseList.getResponseList().size() == 0)
             feedService.deleteRedis(memberId);
         return ResponseEntity.ok(responseList);
@@ -59,7 +60,8 @@ public class FeedController {
     public ResponseEntity<FeedDtoList> getFeedsByMember(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                         @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
         long memberId = authenticationGetMemberId.getMemberId();
-        FeedDtoList responseList = feedService.getFeedsByMember(page, size, memberId);
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsByMember(page, size, memberId);
+        FeedDtoList responseList = feedService.changeFeedListToFeedResponseDto(feedListToServiceDto, memberId);
         return ResponseEntity.ok(responseList);
     }
 
@@ -69,7 +71,8 @@ public class FeedController {
                                                         @ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                         @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
 
-        FeedDtoList responseList = feedService.getFeedsByMember(page, size, memberId);
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsByMember(page, size, memberId);
+        FeedDtoList responseList = feedService.changeFeedListToFeedResponseDto(feedListToServiceDto, memberId);
         return ResponseEntity.ok(responseList);
     }
 
@@ -78,22 +81,18 @@ public class FeedController {
     public ResponseEntity<FeedDtoList> getFeedsByMemberFollow(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                               @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
 
-        log.info("getFeedsByMemberFollow start");
-        log.info("Request Time : {}", LocalTime.now());
-        log.info("page : {}, size : {}", page, size);
         long memberId = authenticationGetMemberId.getMemberId();
-        FeedDtoList responseList = feedService.getFeedsByMemberFollow(memberId, page, size);
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsByMemberFollow(memberId, page, size);
+        FeedDtoList responseList = feedService.serviceDtoToFeedDtoList(feedListToServiceDto);
         if (responseList.getResponseList().size() < size) {
-            size = size-responseList.getResponseList().size();
-            FeedDtoList addResponseList = feedService.getFeedsRecent(memberId, page, size);
-            responseList.getResponseList().addAll(addResponseList.getResponseList());
+            size = size - responseList.getResponseList().size();
+            FeedServiceDto.FeedListToServiceDto lackFeedListToServiceDto = feedService.getFeedsRecent(memberId, page, size);
+            responseList.getResponseList().addAll(feedService.serviceDtoToFeedDtoList(lackFeedListToServiceDto).getResponseList());
         }
         if (responseList.getResponseList().size() == 0) {
             feedService.deleteRedis(memberId);
-            log.info("Redis Reset @@@@@@@@@@@@@@@@");
         }
 
-        log.info("getFeedsByMemberFollow end");
         return ResponseEntity.ok(responseList);
     }
 
@@ -109,7 +108,8 @@ public class FeedController {
                 .content(content)
                 .images(images == null ? imageList : List.of(images))
                 .build();
-        FeedDto.Response response = feedService.createFeed(post, memberId);
+        Long savedFeedId = feedService.createFeed(post, memberId);
+        FeedDto.Response response = feedService.changeFeedToFeedDtoResponse(savedFeedId, memberId);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -130,7 +130,8 @@ public class FeedController {
                 .addImages(addImages == null ? addImageList : List.of(addImages))
                 .deleteImages(deleteImages == null ? deleteImagesList : List.of(deleteImages))
                 .build();
-        FeedDto.Response response = feedService.patchFeed(patch, memberId);
+        Long patchedFeedId = feedService.patchFeed(patch, memberId);
+        FeedDto.Response response = feedService.changeFeedToFeedDtoResponse(patchedFeedId, memberId);
         return ResponseEntity.ok(response);
     }
 
