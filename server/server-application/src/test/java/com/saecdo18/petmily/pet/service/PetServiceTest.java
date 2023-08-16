@@ -389,15 +389,11 @@ class PetServiceTest {
         given(s3UploadService.saveFile(Mockito.any(MultipartFile.class), Mockito.anyString())).willReturn(uploadFileURL);
         given(imageRepository.save(Mockito.any(Image.class))).willReturn(image);  //savePetImage
 
-        given(petRepository.findById(Mockito.anyLong())).willReturn(Optional.of(pet));
-        given(petMapper.petToPetResponseDto(pet)).willReturn(petResponse);
-        given(petImageRepository.findByPet(Mockito.any(Pet.class))).willReturn(petImage);
-        given(petMapper.imageToImageDto(Mockito.any(Image.class))).willReturn(imageDto);
-
-
 
         // when
-        petService.updatePet(memberId, petId, petPatchDto);
+        long patchPetId = petService.updatePet(memberId, petId, petPatchDto);
+
+        assertEquals(patchPetId, petId); //수정한 펫아이디
     }
 
     @Test
@@ -417,36 +413,6 @@ class PetServiceTest {
         PetServiceDto.Patch petPatchDto = PetServiceDto.Patch.builder()
                 .images(images)
                 .name("메시")
-                .build();
-
-        Pet pet = new Pet();
-        ReflectionTestUtils.setField(pet, "petId", 1L);
-        ReflectionTestUtils.setField(pet, "name", "메시");
-        ReflectionTestUtils.setField(pet, "member", member);
-
-        MemberDto.Response memberResponse = MemberDto.Response.builder()
-                .build();
-
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
-
-        PetDto.Response petResponse = PetDto.Response.builder()
-                .build();
-
-        Image image = Image.builder().uploadFileURL(uploadFileURL).build();
-
-        PetImage petImage = new PetImage();
-        ReflectionTestUtils.setField(petImage,"PetImageId", 1L);
-        ReflectionTestUtils.setField(petImage, "pet", pet);
-        ReflectionTestUtils.setField(petImage, "image", image);
-
-        ReflectionTestUtils.setField(pet, "petImage",petImage);
-
-        ImageDto imageDto = ImageDto.builder()
-                .imageId(1L)
-                .originalFilename("gitimage.png")
-                .uploadFileURL("image/png/gitimage.png")
                 .build();
 
 
