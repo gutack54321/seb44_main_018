@@ -7,6 +7,7 @@ import com.saecdo18.petmily.feed.dto.FeedDtoList;
 import com.saecdo18.petmily.feed.dto.FeedServiceDto;
 import com.saecdo18.petmily.feed.service.FeedServiceImpl;
 import com.saecdo18.petmily.image.dto.ImageDto;
+import com.saecdo18.petmily.jwt.JwtAuthenticationFilter;
 import com.saecdo18.petmily.jwt.TokenProvider;
 import com.saecdo18.petmily.member.dto.MemberDto;
 import org.junit.jupiter.api.DisplayName;
@@ -18,16 +19,26 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.NestedServletException;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -53,7 +64,7 @@ class FeedControllerTest {
     TokenProvider tokenProvider;
 
     @Test
-    @DisplayName("피드 가져오기")
+    @DisplayName("피드 가져오기 - 성공")
     void getFeed() throws Exception {
         long feedId = 1L;
         long memberId = 1L;
@@ -64,7 +75,7 @@ class FeedControllerTest {
         given(feedService.changeFeedToFeedDtoResponse(Mockito.anyLong(), Mockito.anyLong())).willReturn(feedDto);
 
         ResultActions actions = mockMvc.perform(
-                get("/feeds/all/{feed-id}", feedId)
+                get("/feeds/{feed-id}", feedId)
                         .header("Authorization", tokenProvider.createAccessToken(memberId))
         );
 
@@ -74,6 +85,25 @@ class FeedControllerTest {
                 .andExpect(jsonPath("$.feedId").value(feedId))
                 .andExpect(jsonPath("$.memberInfo.memberId").value(memberId));
     }
+
+    @Test
+    @DisplayName("피드 가져오기 - 실패: 잘못된 피드 아이디")
+    void getFeed_Failure_InvalidFeedId() throws Exception {
+        long invalidFeedId = -1L;
+        long memberId = 1L;
+
+        given(feedService.changeFeedToFeedDtoResponse(Mockito.anyLong(), Mockito.anyLong())).willThrow(new RuntimeException("피드를 찾을 수 없습니다."));
+
+        assertThrows(NestedServletException.class, () -> {
+            mockMvc.perform(
+                    get("/feeds/{feed-id}", invalidFeedId)
+                            .header("Authorization", tokenProvider.createAccessToken(memberId))
+            );
+        });
+
+    }
+
+
 
 //    @Test
 //    @DisplayName("피드 최신순 가져오기")
@@ -158,64 +188,63 @@ class FeedControllerTest {
 //                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
 //    }
 
-//    @Test
-//    @DisplayName("피드 생성")
-//    void createFeed() throws Exception {
-//        long memberId = 1L;
-//        long feedId = 1L;
-//
-//        List<MultipartFile> imageList = List.of(new MockMultipartFile("image", "gitimage.png", "image/png",
-//                new FileInputStream(getClass().getResource("/gitimage.png").getFile())));
-//
-//        FeedDto.Response response = getOneFeed(1L);
-//
-//        String content = gson.toJson(response);
-//        FeedDto.Response feedDtoResponse = getOneFeed(feedId);
-//
-//        given(feedService.createFeed(any(), Mockito.anyLong())).willReturn(feedDtoResponse);
-//
-//        mockMvc.perform(
-//                multipart("/feeds")
-//                        .file("images",imageList.get(0).getBytes())
-//                        .header("Authorization", tokenProvider.createAccessToken(memberId))
-//                        .param("memberId", String.valueOf(memberId))
-//                        .param("content", "content")
-//        ).andExpect(status().isCreated())
-//                .andExpect(content().json(content));
-//    }
-//
-//    @Test
-//    @DisplayName("피드 수정")
-//    void patchFeed() throws Exception {
-//        long memberId = 1L;
-//        long feedId = 1L;
-//        List<MultipartFile> imageList = List.of(new MockMultipartFile("image", "gitimage.png", "image/png",
-//                new FileInputStream(getClass().getResource("/gitimage.png").getFile())));
-//        String[] deleteImages = new String[]{"image1.jpg", "image2.jpg"};
-//
-//        FeedDto.Patch patch = FeedDto.Patch.builder()
-//                .feedId(feedId)
-//                .content("content")
-//                .addImages(imageList)
-//                .deleteImages(List.of(deleteImages))
-//                .build();
-//
-//        FeedDto.Response response = getOneFeed(1L);
-//        String content = gson.toJson(response);
-//
-//        given(feedService.patchFeed(any(FeedServiceDto.Patch.class), Mockito.anyLong())).willReturn(response);
-//
-//        mockMvc.perform(
-//                    patch("/feeds/{feed-id}", feedId)
-//                            .content(imageList.get(0).getBytes())
-//                            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-//                            .header("Authorization", tokenProvider.createAccessToken(memberId))
-//                            .param("deleteImages", deleteImages)
-//                            .param("content", "content")
-//            ).andExpect(status().isOk())
-//            .andExpect(content().json(content));
-//
-//    }
+    @Test
+    @DisplayName("피드 생성")
+    void createFeed() throws Exception {
+        long memberId = 1L;
+        long feedId = 1L;
+
+        List<MultipartFile> imageList = List.of(new MockMultipartFile("image", "gitimage.png", "image/png",
+                new FileInputStream(getClass().getResource("/gitimage.png").getFile())));
+
+        FeedServiceDto.Post post = FeedServiceDto.Post.builder()
+                .content("content")
+                .build();
+
+        FeedDto.Response response = getOneFeed(1L);
+
+        String content = gson.toJson(response);
+        FeedDto.Response feedDtoResponse = getOneFeed(feedId);
+
+        given(feedService.createFeed(any(), Mockito.anyLong())).willReturn(feedId);
+        given(feedService.changeFeedToFeedDtoResponse(feedId, memberId)).willReturn(feedDtoResponse);
+
+        mockMvc.perform(
+                multipart("/feeds")
+                        .file("images",imageList.get(0).getBytes())
+                        .header("Authorization", tokenProvider.createAccessToken(memberId))
+                        .param("memberId", String.valueOf(memberId))
+                        .param("content", "content")
+        ).andExpect(status().isCreated())
+                .andExpect(content().json(content));
+    }
+
+    @Test
+    @DisplayName("피드 수정")
+    void patchFeed() throws Exception {
+        long memberId = 1L;
+        long feedId = 1L;
+        List<MultipartFile> imageList = List.of(new MockMultipartFile("image", "gitimage.png", "image/png",
+                new FileInputStream(getClass().getResource("/gitimage.png").getFile())));
+        String[] deleteImages = new String[]{"image1.jpg", "image2.jpg"};
+
+        FeedDto.Response response = getOneFeed(1L);
+        String content = gson.toJson(response);
+
+        given(feedService.patchFeed(any(FeedServiceDto.Patch.class), Mockito.anyLong())).willReturn(feedId);
+        given(feedService.changeFeedToFeedDtoResponse(feedId, memberId)).willReturn(response);
+
+        mockMvc.perform(
+                    patch("/feeds/{feed-id}", feedId)
+                            .content(imageList.get(0).getBytes())
+                            .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                            .header("Authorization", tokenProvider.createAccessToken(memberId))
+                            .param("deleteImages", deleteImages)
+                            .param("content", "content")
+            ).andExpect(status().isOk())
+            .andExpect(content().json(content));
+
+    }
 
     @Test
     @DisplayName("피드 삭제")
