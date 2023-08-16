@@ -92,6 +92,42 @@ public class FeedServiceImpl implements FeedService {
                 .build();
     }
 
+    public FeedDto.Response changeFeedToFeedDtoResponse(Long feedId, long memberId) {
+        Feed feed = methodFindByFeedId(feedId);
+        FeedDto.Response response = feedMapper.FeedToFeedDtoResponse(feed);
+        List<FeedCommentDto.Response> feedCommentDtoList = methodFindFeedCommentByFeedId(feed.getFeedId());
+        if (!feedCommentDtoList.isEmpty()) {
+            response.setFeedComments(feedCommentDtoList);
+        }
+        response.setMemberInfo(memberIdToMemberInfoDto(feed.getMember().getMemberId()));
+        List<FeedImage> feedImageList = feed.getFeedImageList();
+        if(feedImageList != null)
+            response.setImages(feedImageToImageDtoList(feedImageList));
+
+        if (memberId == 0) {
+            response.setLike(false);
+        } else {
+            response.setLike(feedLikesByMember(feed, methodFindByMemberId(memberId)));
+        }
+        response.setShareURL(feed.getShareURI(BASE_URI).toString());
+
+        return response;
+    }
+
+    public FeedDtoList changeFeedListToFeedResponseDto(FeedServiceDto.FeedListToServiceDto feedListToServiceDto,
+                                                       long memberId) {
+
+        List<FeedDto.Response> responseList = new ArrayList<>();
+        for (Feed feed : feedListToServiceDto.getFeedList()) {
+            FeedDto.Response response = changeFeedToFeedDtoResponse(feed.getFeedId(), memberId);
+            responseList.add(response);
+        }
+
+        return FeedDtoList.builder()
+                .responseList(responseList)
+                .build();
+    }
+
     @Override
     public FeedServiceDto.FeedListToServiceDto getFeedsRecent(long memberId, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -317,52 +353,9 @@ public class FeedServiceImpl implements FeedService {
         return feedLike.map(FeedLike::isLike).orElse(false);
     }
 
-    public FeedDto.Response changeFeedToFeedDtoResponse(Long feedId, long memberId) {
-        Feed feed = methodFindByFeedId(feedId);
-        FeedDto.Response response = feedMapper.FeedToFeedDtoResponse(feed);
-        List<FeedCommentDto.Response> feedCommentDtoList = methodFindFeedCommentByFeedId(feed.getFeedId());
-        if (!feedCommentDtoList.isEmpty()) {
-            response.setFeedComments(feedCommentDtoList);
-        }
-        response.setMemberInfo(memberIdToMemberInfoDto(feed.getMember().getMemberId()));
-        List<FeedImage> feedImageList = feed.getFeedImageList();
-        if(feedImageList != null)
-            response.setImages(feedImageToImageDtoList(feedImageList));
 
-        if (memberId == 0) {
-            response.setLike(false);
-        } else {
-            response.setLike(feedLikesByMember(feed, methodFindByMemberId(memberId)));
-        }
-        response.setShareURL(feed.getShareURI(BASE_URI).toString());
 
-        return response;
-    }
 
-    public FeedDtoList changeFeedListToFeedResponseDto(FeedServiceDto.FeedListToServiceDto feedListToServiceDto,
-                                                       long memberId) {
-
-        List<FeedDto.Response> responseList = new ArrayList<>();
-        for (Feed feed : feedListToServiceDto.getFeedList()) {
-            FeedDto.Response response = changeFeedToFeedDtoResponse(feed.getFeedId(), memberId);
-            responseList.add(response);
-        }
-
-        return FeedDtoList.builder()
-                .responseList(responseList)
-                .build();
-    }
-
-    public FeedServiceDto.PreviousListIds checkIds(FeedServiceDto.PreviousListIds listIds, FeedDtoList feedDtoList) {
-        List<Long> addIds = new ArrayList<>();
-        for (FeedDto.Response response : feedDtoList.getResponseList()) {
-            addIds.add(response.getFeedId());
-        }
-
-        listIds.getPreviousListIds().addAll(addIds);
-
-        return listIds;
-    }
 
     private void addToRedisSet(List<Feed> values, long memberId) {
         for (Feed value : values) {
