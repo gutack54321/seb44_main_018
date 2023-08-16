@@ -63,35 +63,35 @@ class PetServiceTest {
     private ImageRepository imageRepository;
 
     @Test
-    @DisplayName("펫 등록하기 성공")
+    @DisplayName("펫 등록하기 성공: 미견주회원 -> 견주회원")
     void createPetSuccess() throws IOException {
         long memberId = 1L;
-        String uploadFileURL = "http://image.jpg";
+        long petId = 2L;
+        String petName="메시";
 
+        String uploadFileURL = "http://image.jpg";
         MultipartFile images = new MockMultipartFile("image", "gitimage.png", "image/png",
                 new FileInputStream(getClass().getResource("/gitimage.png").getFile()));
 
         Member member = new Member();
         ReflectionTestUtils.setField(member, "memberId", memberId);
+        ReflectionTestUtils.setField(member, "animalParents", false);
 
         PetServiceDto.Post petPostDto = PetServiceDto.Post.builder()
                 .images(images)
-                .name("메시")
+                .name(petName)
                 .build();
 
         Pet pet = new Pet();
-        ReflectionTestUtils.setField(pet, "petId", 1L);
-        ReflectionTestUtils.setField(pet, "name", "메시");
+        ReflectionTestUtils.setField(pet, "petId", petId);
+        ReflectionTestUtils.setField(pet, "name", petName);
         ReflectionTestUtils.setField(pet, "member", member);
 
-        MemberDto.Response memberResponse = MemberDto.Response.builder()
-                .build();
-
-        MemberDto.Info memberInfo = MemberDto.Info.builder()
-                .memberId(1L)
-                .build();
 
         PetDto.Response petResponse = PetDto.Response.builder()
+                .petId(petId)
+                .memberId(memberId)
+                .name(petName)
                 .build();
 
         Image image = Image.builder().uploadFileURL(uploadFileURL).build();
@@ -108,18 +108,77 @@ class PetServiceTest {
                 .build();
 
 
+
         given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
         given(s3UploadService.saveFile(Mockito.any(MultipartFile.class), Mockito.anyString())).willReturn(uploadFileURL);
         given(imageRepository.save(Mockito.any(Image.class))).willReturn(image);  //savePetImage
         given(petRepository.save(Mockito.any(Pet.class))).willReturn(pet);
 
-        given(petRepository.findById(Mockito.anyLong())).willReturn(Optional.of(pet));
-        given(petMapper.petToPetResponseDto(pet)).willReturn(petResponse);
-        given(petImageRepository.findByPet(Mockito.any(Pet.class))).willReturn(petImage);
-        given(petMapper.imageToImageDto(Mockito.any(Image.class))).willReturn(imageDto);
+        // when
+        long createPetId = petService.createPet(memberId, petPostDto);
+
+        assertEquals(createPetId, petId); //생성 후 펫 아이디
+        assertTrue(member.isAnimalParents());  //미견주 회원 -> 견주회원 변경 완료
+
+    }
+
+    @Test
+    @DisplayName("펫 등록하기 성공: 견주회원의 펫 등록")
+    void createPetSuccessAlreadyUser() throws IOException {
+        long memberId = 1L;
+        long petId = 2L;
+        String petName="메시";
+
+        String uploadFileURL = "http://image.jpg";
+        MultipartFile images = new MockMultipartFile("image", "gitimage.png", "image/png",
+                new FileInputStream(getClass().getResource("/gitimage.png").getFile()));
+
+        Member member = new Member();
+        ReflectionTestUtils.setField(member, "memberId", memberId);
+        ReflectionTestUtils.setField(member, "animalParents", true);
+
+        PetServiceDto.Post petPostDto = PetServiceDto.Post.builder()
+                .images(images)
+                .name(petName)
+                .build();
+
+        Pet pet = new Pet();
+        ReflectionTestUtils.setField(pet, "petId", petId);
+        ReflectionTestUtils.setField(pet, "name", petName);
+        ReflectionTestUtils.setField(pet, "member", member);
+
+
+        PetDto.Response petResponse = PetDto.Response.builder()
+                .petId(petId)
+                .memberId(memberId)
+                .name(petName)
+                .build();
+
+        Image image = Image.builder().uploadFileURL(uploadFileURL).build();
+
+        PetImage petImage = new PetImage();
+        ReflectionTestUtils.setField(petImage,"PetImageId", 1L);
+        ReflectionTestUtils.setField(petImage, "pet", pet);
+        ReflectionTestUtils.setField(petImage, "image", image);
+
+        ImageDto imageDto = ImageDto.builder()
+                .imageId(1L)
+                .originalFilename("gitimage.png")
+                .uploadFileURL("image/png/gitimage.png")
+                .build();
+
+
+
+        given(memberRepository.findById(Mockito.anyLong())).willReturn(Optional.of(member));
+        given(s3UploadService.saveFile(Mockito.any(MultipartFile.class), Mockito.anyString())).willReturn(uploadFileURL);
+        given(imageRepository.save(Mockito.any(Image.class))).willReturn(image);  //savePetImage
+        given(petRepository.save(Mockito.any(Pet.class))).willReturn(pet);
 
         // when
-        petService.createPet(memberId, petPostDto);
+        long createPetId = petService.createPet(memberId, petPostDto);
+
+        assertEquals(createPetId, petId); //생성 후 펫 아이디
+        assertTrue(member.isAnimalParents());  //견주인지 확인
 
     }
 
@@ -180,8 +239,13 @@ class PetServiceTest {
     @DisplayName("펫 조회하기 성공")
     void getPetSuccess() {
         long petId = 1L;
+        String name = "메시";
+
         long memberId = 1L;
+
+
         String uploadFileURL = "http://image.jpg";
+        String originalFilename = "petimage";
 
         Member member = new Member();
         ReflectionTestUtils.setField(member, "memberId", memberId);
@@ -189,14 +253,20 @@ class PetServiceTest {
 
         Pet pet = new Pet();
         ReflectionTestUtils.setField(pet, "petId", 1L);
-        ReflectionTestUtils.setField(pet, "name", "메시");
+        ReflectionTestUtils.setField(pet, "name", name);
         ReflectionTestUtils.setField(pet, "member", member);
 
 
         PetDto.Response petResponse = PetDto.Response.builder()
+                .petId(petId)
+                .name(name)
+                .memberId(member.getMemberId())
                 .build();
 
-        Image image = Image.builder().uploadFileURL(uploadFileURL).build();
+        Image image = Image.builder()
+                .originalFilename(originalFilename)
+                .uploadFileURL(uploadFileURL)
+                .build();
 
         PetImage petImage = new PetImage();
         ReflectionTestUtils.setField(petImage,"PetImageId", 1L);
@@ -205,8 +275,8 @@ class PetServiceTest {
 
         ImageDto imageDto = ImageDto.builder()
                 .imageId(1L)
-                .originalFilename("gitimage.png")
-                .uploadFileURL("image/png/gitimage.png")
+                .originalFilename(originalFilename)
+                .uploadFileURL(uploadFileURL)
                 .build();
 
 
@@ -216,7 +286,12 @@ class PetServiceTest {
         given(petMapper.imageToImageDto(Mockito.any(Image.class))).willReturn(imageDto);
 
         // when
-        petService.getPet(petId);
+        PetDto.Response result = petService.getPet(petId);
+
+        assertEquals(result.getPetId(), petId); //조회한 펫 아이디 확인
+        assertEquals(result.getImages().getUploadFileURL(), uploadFileURL); //펫 이미지의 업로드 경로
+        assertEquals(result.getImages().getOriginalFilename(), originalFilename);  //펫 이미지의 파일 이름
+        assertEquals(result.getName(), name);  //반려동물 이름
     }
 
     @Test
