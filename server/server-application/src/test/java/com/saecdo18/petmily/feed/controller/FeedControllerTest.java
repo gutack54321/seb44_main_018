@@ -7,7 +7,6 @@ import com.saecdo18.petmily.feed.dto.FeedDtoList;
 import com.saecdo18.petmily.feed.dto.FeedServiceDto;
 import com.saecdo18.petmily.feed.service.FeedServiceImpl;
 import com.saecdo18.petmily.image.dto.ImageDto;
-import com.saecdo18.petmily.jwt.JwtAuthenticationFilter;
 import com.saecdo18.petmily.jwt.TokenProvider;
 import com.saecdo18.petmily.member.dto.MemberDto;
 import org.junit.jupiter.api.DisplayName;
@@ -19,14 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
-import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.util.LinkedMultiValueMap;
@@ -36,6 +27,7 @@ import org.springframework.web.util.NestedServletException;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -133,63 +125,171 @@ class FeedControllerTest {
 //                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
 //    }
 
-//    @Test
-//    @DisplayName("사용자 피드 리스트 가져오기")
-//    void getFeedsByMember() throws Exception {
-//        long memberId = 1L;
-//        int page = 0;
-//        int size = 10;
-//        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-//        params.add("page", String.valueOf(page));
-//        params.add("size", String.valueOf(size));
-//
-//        FeedDtoList feedDtoList = getFeedList(2);
-//        String content = gson.toJson(feedDtoList);
-//
-//        given(feedService.getFeedsByMember(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyLong())).willReturn(feedDtoList);
-//
-//        mockMvc.perform(
-//                get("/feeds/my-feed")
-//                        .params(params)
-//                        .header("Authorization", tokenProvider.createAccessToken(memberId))
-//        ).andExpect(status().isOk())
-//                .andExpect(content().json(content))
-//                .andExpect(jsonPath("$.responseList[0].feedId").value(1))
-//                .andExpect(jsonPath("$.responseList[1].feedId").value(2))
-//                .andExpect(jsonPath("$.responseList[0].memberInfo.memberId").value(1))
-//                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
-//    }
+    @Test
+    @DisplayName("사용자 피드 리스트 가져오기 - 성공: 피드가 있을 경우")
+    void getFeeds() throws Exception {
+        long memberId = 1L;
+        int page = 0;
+        int size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
 
-//    @Test
-//    @DisplayName("팔로우한 사용자 피드 리스트 가져오기")
-//    void getFeedsByMemberFollow() throws Exception {
-//        long memberId = 1L;
-//        FeedDtoList feedDtoList = getFeedList(10);
-//        FeedDtoList resultList = getFeedList(2);
-//        feedDtoList.getResponseList().addAll(resultList.getResponseList());
-//        FeedServiceDto.PreviousListIds previousListIds = getPreviousListIds();
-//        String content = gson.toJson(feedDtoList);
-//        String previousList = gson.toJson(previousListIds);
-//
-//        given(feedService.getFeedsByMemberFollow(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyInt())).willReturn(feedDtoList);
-//        given(feedService.checkIds(Mockito.any(), Mockito.any())).willReturn(previousListIds);
-//        given(feedService.getFeedsRecent(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyInt())).willReturn(resultList);
-//        mockMvc.perform(
-//                        post("/feeds/list")
-//                                .accept(MediaType.APPLICATION_JSON)
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                                .header("Authorization", tokenProvider.createAccessToken(memberId))
-//                                .content(previousList)
-//                ).andExpect(status().isOk())
-//                .andExpect(content().json(content));
-//                .andExpect(jsonPath("$.responseList[0].feedId").value(1))
-//                .andExpect(jsonPath("$.responseList[1].feedId").value(2))
-//                .andExpect(jsonPath("$.responseList[0].memberInfo.memberId").value(1))
-//                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
-//    }
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = FeedServiceDto.FeedListToServiceDto.builder().build();
+
+        FeedDtoList feedDtoList = getFeedList(2);
+        String content = gson.toJson(feedDtoList);
+
+        given(feedService.getFeedsByMember(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyLong())).willReturn(feedListToServiceDto);
+        given(feedService.changeFeedListToFeedResponseDto(Mockito.any(FeedServiceDto.FeedListToServiceDto.class), Mockito.anyLong())).willReturn(feedDtoList);
+
+        mockMvc.perform(
+                get("/feeds/my-feed")
+                        .params(params)
+                        .header("Authorization", tokenProvider.createAccessToken(memberId))
+        ).andExpect(status().isOk())
+                .andExpect(content().json(content))
+                .andExpect(jsonPath("$.responseList[0].feedId").value(1))
+                .andExpect(jsonPath("$.responseList[1].feedId").value(2))
+                .andExpect(jsonPath("$.responseList[0].memberInfo.memberId").value(1))
+                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
+    }
 
     @Test
-    @DisplayName("피드 생성")
+    @DisplayName("사용자 피드 리스트 가져오기 - 성공: 피드가 없을 경우")
+    void get_Empty_Feeds() throws Exception {
+        long memberId = 1L;
+        int page = 0;
+        int size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = FeedServiceDto.FeedListToServiceDto.builder().build();
+
+        FeedDtoList feedDtoList = FeedDtoList.builder()
+                .responseList(Collections.emptyList())
+                .build();
+        String content = gson.toJson(feedDtoList);
+
+        given(feedService.getFeedsByMember(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyLong())).willReturn(feedListToServiceDto);
+        given(feedService.changeFeedListToFeedResponseDto(Mockito.any(FeedServiceDto.FeedListToServiceDto.class), Mockito.anyLong())).willReturn(feedDtoList);
+
+        mockMvc.perform(
+                        get("/feeds/my-feed")
+                                .params(params)
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                ).andExpect(status().isOk())
+                .andExpect(content().json(content));
+    }
+
+    @Test
+    @DisplayName("타인 피드 리스트 가져오기 - 성공")
+    void getFeedsByMember() throws Exception {
+        long memberId = 1L;
+        int page = 0, size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = FeedServiceDto.FeedListToServiceDto.builder().build();
+        FeedDtoList feedDtoList = getFeedList(2);
+        String content = gson.toJson(feedDtoList);
+
+        given(feedService.getFeedsByMember(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyLong())).willReturn(feedListToServiceDto);
+        given(feedService.changeFeedListToFeedResponseDto(Mockito.any(FeedServiceDto.FeedListToServiceDto.class), Mockito.anyLong())).willReturn(feedDtoList);
+
+        mockMvc.perform(
+                        get("/feeds/other-feed/{member-id}", memberId)
+                                .params(params)
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                ).andExpect(status().isOk())
+                .andExpect(content().json(content))
+                .andExpect(jsonPath("$.responseList[0].feedId").value(1))
+                .andExpect(jsonPath("$.responseList[1].feedId").value(2))
+                .andExpect(jsonPath("$.responseList[0].memberInfo.memberId").value(1))
+                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
+    }
+
+    @Test
+    @DisplayName("타인 피드 리스트 가져오기 - 실패: 잘못된 사용자 아이디")
+    void getFeedsByMember_Failure_Incorrect_Member_Id() throws Exception {
+        long memberId = 1L;
+        int page = 0, size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+
+        given(feedService.getFeedsByMember(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyLong())).willThrow(new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        assertThrows(NestedServletException.class, () -> {
+            mockMvc.perform(
+                    get("/feeds/other-feed/{member-id}", -1L)
+                            .params(params)
+                            .header("Authorization", tokenProvider.createAccessToken(memberId))
+            );
+        });
+    }
+
+    @Test
+    @DisplayName("팔로우한 사용자 피드 리스트 가져오기 - 성공: 레디스 삭제 없음")
+    void getFeedsByMemberFollow_No_Delete_Redis() throws Exception {
+        long memberId = 1L;
+        int page = 0, size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = FeedServiceDto.FeedListToServiceDto.builder().build();
+
+        FeedDtoList feedDtoList = getFeedList(10);
+        String content = gson.toJson(feedDtoList);
+
+        given(feedService.getFeedsByMemberFollow(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyInt())).willReturn(feedListToServiceDto);
+        given(feedService.serviceDtoToFeedDtoList(Mockito.any(FeedServiceDto.FeedListToServiceDto.class))).willReturn(feedDtoList);
+
+
+        mockMvc.perform(
+                        post("/feeds/list", memberId)
+                                .params(params)
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                ).andExpect(status().isOk())
+                .andExpect(content().json(content))
+                .andExpect(jsonPath("$.responseList[0].feedId").value(1))
+                .andExpect(jsonPath("$.responseList[1].feedId").value(2))
+                .andExpect(jsonPath("$.responseList[0].memberInfo.memberId").value(1))
+                .andExpect(jsonPath("$.responseList[1].memberInfo.memberId").value(1));
+    }
+
+    @Test
+    @DisplayName("팔로우한 사용자 피드 리스트 가져오기 - 성공: 레디스 삭제 있음")
+    void getFeedsByMemberFollow_Delete_Redis() throws Exception {
+        long memberId = 1L;
+        int page = 0, size = 10;
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", String.valueOf(page));
+        params.add("size", String.valueOf(size));
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = FeedServiceDto.FeedListToServiceDto.builder().build();
+
+        FeedDtoList feedDtoList = FeedDtoList.builder()
+                .responseList(Collections.emptyList())
+                .build();
+        String content = gson.toJson(feedDtoList);
+
+        given(feedService.getFeedsByMemberFollow(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyInt())).willReturn(feedListToServiceDto);
+        given(feedService.serviceDtoToFeedDtoList(Mockito.any(FeedServiceDto.FeedListToServiceDto.class))).willReturn(feedDtoList);
+        given(feedService.getFeedsRecent(Mockito.anyLong(), Mockito.anyInt(), Mockito.anyInt())).willReturn(feedListToServiceDto);
+        doNothing().when(feedService).deleteRedis(Mockito.anyLong());
+
+
+        mockMvc.perform(
+                        post("/feeds/list", memberId)
+                                .params(params)
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                ).andExpect(status().isOk())
+                .andExpect(content().json(content));
+    }
+
+    @Test
+    @DisplayName("피드 생성 - 성공: 이미지가 있을 경우")
     void createFeed() throws Exception {
         long memberId = 1L;
         long feedId = 1L;
@@ -199,6 +299,7 @@ class FeedControllerTest {
 
         FeedServiceDto.Post post = FeedServiceDto.Post.builder()
                 .content("content")
+                .images(imageList)
                 .build();
 
         FeedDto.Response response = getOneFeed(1L);
@@ -220,7 +321,37 @@ class FeedControllerTest {
     }
 
     @Test
-    @DisplayName("피드 수정")
+    @DisplayName("피드 생성 - 성공: 이미지가 없을 경우")
+    void createFeed_No_Image() throws Exception {
+        long memberId = 1L;
+        long feedId = 1L;
+
+        List<MultipartFile> imageList = new ArrayList<>();
+
+        FeedServiceDto.Post post = FeedServiceDto.Post.builder()
+                .content("content")
+                .images(imageList)
+                .build();
+
+        FeedDto.Response response = getOneFeed(1L);
+
+        String content = gson.toJson(response);
+        FeedDto.Response feedDtoResponse = getOneFeed(feedId);
+
+        given(feedService.createFeed(any(), Mockito.anyLong())).willReturn(feedId);
+        given(feedService.changeFeedToFeedDtoResponse(feedId, memberId)).willReturn(feedDtoResponse);
+
+        mockMvc.perform(
+                        multipart("/feeds")
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                                .param("memberId", String.valueOf(memberId))
+                                .param("content", "content")
+                ).andExpect(status().isCreated())
+                .andExpect(content().json(content));
+    }
+
+    @Test
+    @DisplayName("피드 수정 - 성공: 추가 이미지, 삭제 이미지 있을 경우")
     void patchFeed() throws Exception {
         long memberId = 1L;
         long feedId = 1L;
@@ -243,6 +374,28 @@ class FeedControllerTest {
                             .param("content", "content")
             ).andExpect(status().isOk())
             .andExpect(content().json(content));
+
+    }
+
+    @Test
+    @DisplayName("피드 수정 - 성공: 추가 이미지, 삭제 이미지 있을 경우")
+    void patchFeed_No_Add_Delete_Image() throws Exception {
+        long memberId = 1L;
+        long feedId = 1L;
+
+        FeedDto.Response response = getOneFeed(1L);
+        String content = gson.toJson(response);
+
+        given(feedService.patchFeed(any(FeedServiceDto.Patch.class), Mockito.anyLong())).willReturn(feedId);
+        given(feedService.changeFeedToFeedDtoResponse(feedId, memberId)).willReturn(response);
+
+        mockMvc.perform(
+                        patch("/feeds/{feed-id}", feedId)
+                                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                                .header("Authorization", tokenProvider.createAccessToken(memberId))
+                                .param("content", "content")
+                ).andExpect(status().isOk())
+                .andExpect(content().json(content));
 
     }
 
@@ -356,11 +509,4 @@ class FeedControllerTest {
                 .build();
     }
 
-    private FeedServiceDto.PreviousListIds getPreviousListIds() {
-        List<Long> list = new ArrayList<>();
-        list.add(1L);
-        FeedServiceDto.PreviousListIds idList = new FeedServiceDto.PreviousListIds();
-        idList.setPreviousListIds(list);
-        return idList;
-    }
 }

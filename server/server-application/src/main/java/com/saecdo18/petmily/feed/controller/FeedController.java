@@ -57,7 +57,7 @@ public class FeedController {
 
     @ApiOperation("사용자 피드 리스트 가져오기")
     @GetMapping("/my-feed")
-    public ResponseEntity<FeedDtoList> getFeedsByMember(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<FeedDtoList> getFeeds(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                         @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
         long memberId = authenticationGetMemberId.getMemberId();
         FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsByMember(page, size, memberId);
