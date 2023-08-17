@@ -61,7 +61,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         get("/members/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
                 );
 
@@ -94,7 +94,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         patch("/members/status")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(patchContent)
@@ -124,7 +124,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         post("/members/following/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );
@@ -156,7 +156,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         get("/members/following/list")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );
@@ -182,7 +182,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         patch("/members/image/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );
