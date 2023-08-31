@@ -33,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {"spring.config.name=application-test", "spring.config.location=classpath:/"})
 @AutoConfigureMockMvc
 class MemberControllerTest {
+    // 로컬로 어플 실행 후 mysql의 멤버 id를 통해서 jwt 검증
+
     @Autowired
     private MockMvc mockMvc;
 
