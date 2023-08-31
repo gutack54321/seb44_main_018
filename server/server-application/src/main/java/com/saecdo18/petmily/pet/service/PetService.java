@@ -42,7 +42,7 @@ public class PetService {
     private final MemberService memberService;
     private final static String BASE_IMAGE_URL = "https://main-project-junyoung.s3.ap-northeast-2.amazonaws.com/%E1%84%80%E1%85%B5%E1%84%87%E1%85%A9%E1%86%AB%E1%84%8B%E1%85%B5%E1%84%86%E1%85%B5%E1%84%8C%E1%85%B5%E1%84%91%E1%85%B3%E1%84%89%E1%85%A1.jpeg";
 
-    public PetDto.Response createPet(long memberId, PetServiceDto.Post petPostDto) throws IOException {
+    public long createPet(long memberId, PetServiceDto.Post petPostDto) throws IOException {
         Member findMember = methodFindByMemberIdMember(memberId);
 
         Pet pet = Pet.nonePetIdAndMessage()
@@ -56,20 +56,20 @@ public class PetService {
         pet.updateMember(findMember);
         String uploadFileURL = BASE_IMAGE_URL;
 
-        if (!petPostDto.getImages().isEmpty()) {
-            String originalFilename = petPostDto.getImages().getOriginalFilename()+ UUID.randomUUID();
-            uploadFileURL = s3UploadService.saveFile(petPostDto.getImages(), originalFilename);
-            savePetImage(pet, originalFilename, uploadFileURL);
-        }
+
+        String originalFilename = petPostDto.getImages().getOriginalFilename()+ UUID.randomUUID();
+        uploadFileURL = s3UploadService.saveFile(petPostDto.getImages(), originalFilename);
+        savePetImage(pet, originalFilename, uploadFileURL);
+
         Pet savePet = petRepository.save(pet);
 
-        if(!findMember.isAnimalParents()){
+        if(!findMember.isAnimalParents()){  //해당 회원이 펫을 추가했으니 견주로 바꾸기
             findMember.updateAnimalParents(true);
             findMember.updateImageUrl(uploadFileURL);
             findMember.updateUserRole();
         }
 
-        return getPet(savePet.getPetId());
+        return savePet.getPetId();
     }
 
 
@@ -82,7 +82,7 @@ public class PetService {
     }
 
 
-    public PetDto.Response updatePet(long memberId, long petId, PetServiceDto.Patch patchPet)throws IOException{
+    public long updatePet(long memberId, long petId, PetServiceDto.Patch patchPet)throws IOException{
         Pet findPet = methodFindByPetId(petId);
 
         if(memberId != findPet.getMember().getMemberId()){
@@ -105,7 +105,7 @@ public class PetService {
 
         }
 
-        return getPet(findPet.getPetId());
+        return findPet.getPetId();
     }
 
     public void deletePet(long memberId, long petId) {

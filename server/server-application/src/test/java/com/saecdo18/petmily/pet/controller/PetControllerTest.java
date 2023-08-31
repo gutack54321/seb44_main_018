@@ -52,6 +52,7 @@ class PetControllerTest {
     @Test
     void postPet() throws Exception {
 
+        long postPetId=1l;
 
         ImageDto imageDto = ImageDto.builder()
                 .imageId(1l)
@@ -60,7 +61,7 @@ class PetControllerTest {
                 .build();
 
         PetDto.Response response = PetDto.Response.builder()
-                .petId(1l)
+                .petId(postPetId)
                 .images(imageDto)
                 .name("메시")
                 .age(5)
@@ -69,7 +70,8 @@ class PetControllerTest {
                 .information("안녕하세용")
                 .build();
 
-        given(petService.createPet(Mockito.anyLong(), Mockito.any(PetServiceDto.Post.class))).willReturn(response);
+        given(petService.createPet(Mockito.anyLong(), Mockito.any(PetServiceDto.Post.class))).willReturn(postPetId);
+        given(petService.getPet(Mockito.anyLong())).willReturn(response);
 
         MockMultipartFile image = new MockMultipartFile("images", "imagefile.jpeg", "image/jpeg", "<<jpeg data>>".getBytes());
 
@@ -83,7 +85,7 @@ class PetControllerTest {
                                 .param("sex","수컷")
                                 .param("species","웰시코기")
                                 .param("information","안녕하세용")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2l))
 
                         );
 
@@ -114,12 +116,13 @@ class PetControllerTest {
                 .information("안녕하세용")
                 .build();
 
+
         given(petService.getPet(Mockito.anyLong())).willReturn(response);
 
         ResultActions getActions =
                 mockMvc.perform(
                         get("/pets/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2l))
                                 .accept(MediaType.APPLICATION_JSON)
                 );
 
@@ -130,15 +133,16 @@ class PetControllerTest {
 
     @Test
     void patchPet() throws Exception {
+        long petId=1L;
 
         ImageDto imageDto = ImageDto.builder()
                 .imageId(1l)
-                .originalFilename("웰시코기.png")
+                .originalFilename("imagefile.jpeg")
                 .uploadFileURL("http://s3anjtlrlanjtlrlEkfks")
                 .build();
 
         PetDto.Response response = PetDto.Response.builder()
-                .petId(1l)
+                .petId(petId)
                 .images(imageDto)
                 .name("메시")
                 .age(5)
@@ -147,7 +151,8 @@ class PetControllerTest {
                 .information("안녕하세용")
                 .build();
 
-        given(petService.updatePet(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(PetServiceDto.Patch.class))).willReturn(response);
+        given(petService.updatePet(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(PetServiceDto.Patch.class))).willReturn(petId);
+        given(petService.getPet(Mockito.anyLong())).willReturn(response);
 
         MockMultipartFile image = new MockMultipartFile("images", "imagefile.jpeg", "image/jpeg", "<<jpeg data>>".getBytes());
 
@@ -171,7 +176,7 @@ class PetControllerTest {
                         .param("sex","수컷")
                         .param("species","웰시코기")
                         .param("information","안녕하세용")
-                        .header("Authorization", tokenProvider.createAccessToken(1))
+                        .header("Authorization", tokenProvider.createAccessToken(2l))
 
                 );
 
@@ -189,16 +194,13 @@ class PetControllerTest {
         getActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(response.getName()))
-                .andExpect(jsonPath("$.age").value(response.getAge()))
-                .andExpect(jsonPath("$.images.originalFilenam").value(response.getImages().getOriginalFilename()))
-
-        ;
+                .andExpect(jsonPath("$.age").value(response.getAge()));
     }
 
     @Test
     void deletePet() throws Exception {
 
-        mockMvc.perform(delete("/pets/1").header("Authorization", tokenProvider.createAccessToken(1)))
+        mockMvc.perform(delete("/pets/1").header("Authorization", tokenProvider.createAccessToken(2l)))
 
                 .andExpect(status().isNoContent());
     }

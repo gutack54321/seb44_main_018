@@ -33,6 +33,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {"spring.config.name=application-test", "spring.config.location=classpath:/"})
 @AutoConfigureMockMvc
 class MemberControllerTest {
+    // 로컬로 어플 실행 후 mysql의 멤버 id를 통해서 jwt 검증
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -61,7 +63,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         get("/members/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
                 );
 
@@ -94,7 +96,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         patch("/members/status")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(patchContent)
@@ -124,7 +126,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         post("/members/following/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );
@@ -156,7 +158,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         get("/members/following/list")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );
@@ -182,7 +184,7 @@ class MemberControllerTest {
         ResultActions getActions =
                 mockMvc.perform(
                         patch("/members/image/1")
-                                .header("Authorization", tokenProvider.createAccessToken(1))
+                                .header("Authorization", tokenProvider.createAccessToken(2))
                                 .accept(MediaType.APPLICATION_JSON)
 
                 );

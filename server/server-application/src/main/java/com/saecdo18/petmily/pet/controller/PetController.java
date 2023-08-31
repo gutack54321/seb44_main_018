@@ -52,7 +52,8 @@ public class PetController {
                 .information(information)
                 .build();
 //        Pet mappingPet = petMapper.petPostDtoToPet(petPostDto);
-        PetDto.Response responsePet = petService.createPet(memberId, petPostDto);
+        long petId = petService.createPet(memberId, petPostDto);
+        PetDto.Response responsePet = petService.getPet(petId);
 
 
         return new ResponseEntity<>(responsePet, HttpStatus.CREATED);
@@ -88,9 +89,10 @@ public class PetController {
                 .species(species)
                 .information(information)
                 .build();
-        PetDto.Response response = petService.updatePet(memberId, petId, petPatchDto);
+        long patchPetId = petService.updatePet(memberId, petId, petPatchDto);
+        PetDto.Response responsePet = petService.getPet(patchPetId);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(responsePet, HttpStatus.OK);
     }
 
     @DeleteMapping("/{pet-id}")

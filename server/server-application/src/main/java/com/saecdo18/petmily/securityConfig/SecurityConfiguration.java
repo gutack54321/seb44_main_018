@@ -47,7 +47,7 @@ public class SecurityConfiguration {
                         "/oauth/**","/feeds/all/**","/auth/**",
                         "/login/**","/swagger-ui/**","/swagger-ui.html/**",
                         "/swagger-resources/**","/v2/api-docs","/v3/api-docs",
-                        "/members/nickname-check/**").permitAll()
+                        "/members/nickname-check/**","/mychatt", "/**").permitAll()
                 .anyRequest().authenticated();
 //            .and()
 //
@@ -72,7 +72,7 @@ public class SecurityConfiguration {
         configuration.addAllowedOrigin("https://share-petment.netlify.app");
         configuration.addAllowedOrigin("https://sharepetment.site");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
+        configuration.addAllowedHeader("http://localhost:8080/mychatt");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
 
