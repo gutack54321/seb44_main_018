@@ -125,6 +125,7 @@ public class MemberService {
         Optional<FollowMember> optionalFollowMember = followMemberRepository.findByFollowerMemberAndFollowingId(findFollower, followingId);
 
         FollowMember followMember;
+        boolean follow;
         if (optionalFollowMember.isEmpty()){
             followMember =FollowMember.builder()
                     .followerMember(findFollower)
@@ -133,7 +134,7 @@ public class MemberService {
             followMemberRepository.save(followMember);
 
             findFollower.updateFollowerCount(true); //member followerCount update
-
+            follow = true;
 
         }
         else{
@@ -141,16 +142,19 @@ public class MemberService {
             followMemberRepository.delete(followMember);
 
             findFollower.updateFollowerCount(false);
-
+            follow = false;
         }
         FollowMemberDto.Response response = followMemberMapper.followMemberToFollowMemberResponseDto(followMember);
         response.setMemberInfo(memberInfo);
+        response.setFollow(follow);
         return  response;
     }
 
     public List<FollowMemberDto.Response> followList(long followingId){
 
-        List<FollowMember> followMemberList = followMemberRepository.findByFollowingId(followingId).get();
+        Optional<List<FollowMember>> optionalFollowMemberList = followMemberRepository.findByFollowingId(followingId);
+        List<FollowMember> followMemberList = optionalFollowMemberList.get();
+        log.info("followMemberList"+followMemberList.toString());
 
         List<FollowMemberDto.Response> responses = new ArrayList<>();
         for(FollowMember followMember:followMemberList){

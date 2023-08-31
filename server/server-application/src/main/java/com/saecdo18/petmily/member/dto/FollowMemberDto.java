@@ -17,6 +17,8 @@ public class FollowMemberDto {
     public static class Response{
         @Setter
         private MemberDto.Info memberInfo;
+        @Setter
+        private boolean follow;
         private LocalDateTime createdAt;
         private LocalDateTime modifiedAt;
     }
