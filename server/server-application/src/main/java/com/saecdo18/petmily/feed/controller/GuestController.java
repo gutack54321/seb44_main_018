@@ -27,7 +27,7 @@ public class GuestController {
     @ApiOperation("피드 가져오기")
     @GetMapping("/{feed-id}")
     public ResponseEntity<FeedDto.Response> getFeed(@ApiParam("피드 아이디") @PathVariable("feed-id") long feedId) {
-        FeedDto.Response response = feedService.getFeed(feedId, 0);
+        FeedDto.Response response = feedService.changeFeedToFeedDtoResponse(feedId, 0);
 
         return ResponseEntity.ok(response);
     }
@@ -36,7 +36,8 @@ public class GuestController {
     @PostMapping("/list/random")
     public ResponseEntity<FeedDtoList> getFeedsRandom(@ApiParam("페이지 번호") @RequestParam(defaultValue = "0") int page,
                                                       @ApiParam("페이지당 받을 피드 수") @RequestParam(defaultValue = "10") int size) {
-        FeedDtoList responseList = feedService.getFeedsRecentForGuest(page, size);
+        FeedServiceDto.FeedListToServiceDto feedListToServiceDto = feedService.getFeedsRecentForGuest(page, size);
+        FeedDtoList responseList = feedService.serviceDtoToFeedDtoList(feedListToServiceDto);
         return ResponseEntity.ok(responseList);
     }
 }

@@ -44,3 +44,6 @@ jwt:
   refresh:
     expiration: 1209600000
     header: Authorization-refresh
+
+kakao:
+  rest: ${KAKAO_CLIENT_KEY}

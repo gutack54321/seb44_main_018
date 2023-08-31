@@ -1,6 +1,7 @@
 package com.saecdo18.petmily.feed.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.saecdo18.petmily.feed.entity.Feed;
 import com.saecdo18.petmily.image.dto.ImageDto;
 import com.saecdo18.petmily.member.dto.MemberDto;
 import io.swagger.annotations.ApiModel;
@@ -33,7 +34,6 @@ public class FeedServiceDto {
         private List<String> deleteImages;
     }
 
-    @Setter
     @Getter
     @Builder
     public static class Response {
@@ -71,4 +71,11 @@ public class FeedServiceDto {
     public static class PreviousListIds {
         private List<Long> previousListIds;
     }
+
+    @Getter
+    @Builder
+    public static class FeedListToServiceDto {
+        private List<Feed> feedList;
+    }
+
 }
