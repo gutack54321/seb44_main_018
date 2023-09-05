@@ -93,7 +93,10 @@ public class FeedController {
             feedService.deleteRedis(memberId);
         }
 
-        return ResponseEntity.ok(responseList);
+        FeedDtoList finalList = feedService.FollowFeedList(responseList);
+
+
+        return ResponseEntity.ok(finalList);
     }
 
 
