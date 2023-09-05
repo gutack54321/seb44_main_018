@@ -51,8 +51,8 @@ public class KakaoService {
 
         formData.add("grant_type" , "authorization_code");
         formData.add("client_id" , KAKAO_CLIENT_KEY);
-        formData.add("redirect_uri" , "http://15.165.146.215:8080/auth/kakao/callback");
-//        formData.add("redirect_uri" , "http://localhost:8080/auth/kakao/callback");
+//        formData.add("redirect_uri" , "http://15.165.146.215:8080/auth/kakao/callback");
+        formData.add("redirect_uri" , "http://localhost:8080/auth/kakao/callback");
         formData.add("code" , code);
 
         String accessTokenRequest = client.post()
