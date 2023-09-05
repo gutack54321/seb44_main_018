@@ -46,10 +46,6 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.10.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	implementation 'org.springframework.boot:spring-boot-starter-tomcat'
-	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper'
-	implementation 'javax.servlet:jstl:1.2'
 }
 
 tasks.named('test') {
