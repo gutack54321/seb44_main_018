@@ -100,7 +100,8 @@ public class FeedServiceImpl implements FeedService {
             response.setFeedComments(feedCommentDtoList);
         }
         response.setMemberInfo(memberIdToMemberInfoDto(feed.getMember().getMemberId()));
-        List<FeedImage> feedImageList = feed.getFeedImageList();
+
+        List<FeedImage> feedImageList = feedImageRepository.findByFeed(feed);
         if(feedImageList != null)
             response.setImages(feedImageToImageDtoList(feedImageList));
 
