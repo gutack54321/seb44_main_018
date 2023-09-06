@@ -50,17 +50,4 @@ public class S3UploadService {
         amazonS3.deleteObject(bucket, originalFilename);
     }
 
-    private void convertToWebP(File input, File output) throws IOException {
-        log.info("input: {}", input.getName());
-        BufferedImage image = ImageIO.read(input);
-        ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
-        ImageWriteParam param = writer.getDefaultWriteParam();
-
-        try (FileImageOutputStream out = new FileImageOutputStream(output)) {
-            writer.setOutput(out);
-            writer.write(null, new IIOImage(image, null, null), param);
-        } finally {
-            writer.dispose();
-        }
-    }
 }
