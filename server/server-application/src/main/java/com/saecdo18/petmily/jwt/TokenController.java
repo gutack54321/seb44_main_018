@@ -17,7 +17,7 @@ public class TokenController {
     private final AuthenticationGetMemberId authenticationGetMemberId;
     private final TokenProvider tokenProvider;
     @GetMapping
-    public ResponseEntity<TokenDto> reIssuance(@RequestBody TokenDto reIssuanceTokenDto) {
+    public ResponseEntity<TokenDto> reIssuance(@RequestBody ReTokenDto reIssuanceTokenDto) {
         long memberId = authenticationGetMemberId.getMemberId();
         if(tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get() != memberId)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
