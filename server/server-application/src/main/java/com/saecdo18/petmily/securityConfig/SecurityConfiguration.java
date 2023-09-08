@@ -30,8 +30,8 @@ public class SecurityConfiguration {
 
         http
                 .csrf().disable()
-                .cors().disable()
-
+                .cors()
+                .and()
 
                 .headers()
                 .frameOptions().disable()
@@ -65,14 +65,10 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowCredentials(true);
-//        configuration.addAllowedOriginPattern("*");
         configuration.addAllowedOrigin("http://localhost:5374");
-        configuration.addAllowedOrigin("http://share-petment.s3-website.ap-northeast-2.amazonaws.com");
-        configuration.addAllowedOrigin("https://share-petment.netlify.app");
         configuration.addAllowedOrigin("https://sharepetment.site");
         configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("http://localhost:8080/mychatt");
+        configuration.addAllowedHeader("*");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
 
