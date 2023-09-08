@@ -30,8 +30,8 @@ public class SecurityConfiguration {
 
         http
                 .csrf().disable()
-                .cors()
-                .and()
+                .cors().disable()
+
 
                 .headers()
                 .frameOptions().disable()
