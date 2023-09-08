@@ -179,7 +179,7 @@ public class KakaoService {
         queryParams.add("animalParents", String.valueOf(member.isAnimalParents()));
 
         return UriComponentsBuilder.newInstance()
-                .scheme("https")
+                .scheme("http")
                 .host("localhost")
 //                .host("share-petment.s3-website.ap-northeast-2.amazonaws.com")
 //                .host("share-petment.netlify.app")
