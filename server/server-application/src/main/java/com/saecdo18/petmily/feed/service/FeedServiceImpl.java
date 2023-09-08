@@ -386,7 +386,7 @@ public class FeedServiceImpl implements FeedService {
     public FeedDtoList serviceDtoToFeedDtoList(FeedServiceDto.FeedListToServiceDto feedListToServiceDto) {
         List<FeedDto.Response> responseList = new ArrayList<>();
         for (Feed feed : feedListToServiceDto.getFeedList()) {
-            FeedDto.Response response = feedMapper.FeedToFeedDtoResponse(feed);
+            FeedDto.Response response = changeFeedToFeedDtoResponse(feed.getFeedId(), feed.getMember().getMemberId());
             responseList.add(response);
         }
         return FeedDtoList.builder()
@@ -395,12 +395,6 @@ public class FeedServiceImpl implements FeedService {
     }
 
     public FeedDtoList FollowFeedList(FeedDtoList list) {
-//        for (FeedDto.Response response : responseList.getResponseList()) {
-//            long feedId = response.getFeedId();
-//            Feed feed = methodFindByFeedId(feedId);
-//            MemberDto.Info memberInfo = memberIdToMemberInfoDto(feed.getMember().getMemberId());
-//            response.setMemberInfo(memberInfo);
-//        }
         List<FeedDto.Response> responseList = new ArrayList<>();
         for (FeedDto.Response feedDto : list.getResponseList()) {
             long feedId = feedDto.getFeedId();

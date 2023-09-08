@@ -3,18 +3,29 @@ package com.saecdo18.petmily.awsConfig;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class S3UploadService {
 
     private final AmazonS3 amazonS3;
@@ -24,14 +35,14 @@ public class S3UploadService {
 
     public String saveFile(MultipartFile multipartFile, String originalFilename) throws IOException {
 
-        String[] arr = multipartFile.getOriginalFilename().split(".");
-        Process process = Runtime.getRuntime().exec("cwebp "+multipartFile.getOriginalFilename()+" -o "+ arr[0]+".webp"); //cwebp input.png -o input.webp
+
 
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(multipartFile.getSize());
         metadata.setContentType(multipartFile.getContentType());
 
         amazonS3.putObject(bucket, originalFilename, multipartFile.getInputStream(), metadata);
+//        amazonS3.putObject(bucket, originalFilename, webpFile);
         return amazonS3.getUrl(bucket, originalFilename).toString();
     }
 
