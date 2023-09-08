@@ -67,6 +67,7 @@ public class FeedServiceImpl implements FeedService {
 
         if (!post.getImages().isEmpty()) {
             for (MultipartFile multipartFile : post.getImages()) {
+
                 String originalFilename = multipartFile.getOriginalFilename()+ UUID.randomUUID();
                 String uploadFileURL = s3UploadService.saveFile(multipartFile, originalFilename);
                 saveImage(createFeed, originalFilename, uploadFileURL);

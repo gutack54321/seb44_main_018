@@ -46,6 +46,7 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.10.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.webp-project.libwebp:webpdecoder:0.6.1'
 }
 
 tasks.named('test') {

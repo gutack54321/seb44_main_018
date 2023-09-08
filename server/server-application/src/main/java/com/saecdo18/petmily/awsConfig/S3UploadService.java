@@ -24,6 +24,9 @@ public class S3UploadService {
 
     public String saveFile(MultipartFile multipartFile, String originalFilename) throws IOException {
 
+        String[] arr = multipartFile.getOriginalFilename().split(".");
+        Process process = Runtime.getRuntime().exec("cwebp "+multipartFile.getOriginalFilename()+" -o "+ arr[0]+".webp"); //cwebp input.png -o input.webp
+
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(multipartFile.getSize());
         metadata.setContentType(multipartFile.getContentType());
