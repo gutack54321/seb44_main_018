@@ -4,10 +4,7 @@ import com.saecdo18.petmily.util.AuthenticationGetMemberId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/refresh")
@@ -16,7 +13,7 @@ public class TokenController {
 
     private final AuthenticationGetMemberId authenticationGetMemberId;
     private final TokenProvider tokenProvider;
-    @GetMapping
+    @PostMapping
     public ResponseEntity<TokenDto> reIssuance(@RequestBody ReTokenDto reIssuanceTokenDto) {
         long memberId = authenticationGetMemberId.getMemberId();
         if(tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get() != memberId)
