@@ -31,6 +31,7 @@ import java.util.List;
 
 @RestController
 @CrossOrigin
+@Slf4j
 @RequestMapping("/members")
 @RequiredArgsConstructor
 public class MemberController {
@@ -45,6 +46,7 @@ public class MemberController {
     @Operation(summary = "자신 정보 조회", description = "회원 조회")
     public ResponseEntity<MemberDto.Response> getMember() {
         long memberId = authenticationGetMemberId.getMemberId();
+        log.info("memberController MemberId={}",memberId);
         MemberDto.Response responseMember = memberService.getMember(memberId, memberId);
         return new ResponseEntity(responseMember, HttpStatus.OK);
     }
