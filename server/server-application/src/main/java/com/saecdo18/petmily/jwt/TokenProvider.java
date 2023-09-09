@@ -6,6 +6,7 @@ import com.saecdo18.petmily.member.entity.Member;
 import com.saecdo18.petmily.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.boot.model.source.internal.hbm.Helper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -75,6 +76,7 @@ public class TokenProvider {
 
     public Optional<String> extractRefreshToken(HttpServletRequest request) {
         log.info("extractRefreshToken");
+
         return Optional.ofNullable(request.getHeader(refreshHeader))
                 .filter(accessToken -> accessToken.startsWith(BEARER))
                 .map(accessToken -> accessToken.replace(BEARER, ""));

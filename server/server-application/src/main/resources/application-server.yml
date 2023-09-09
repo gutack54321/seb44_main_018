@@ -39,7 +39,7 @@ cloud:
 jwt:
   secretKey: SDFJSDLKJFSDIFOJSDIFSDLFJSDKFJLSDJFLSDKJFSDIFJLJSDKJFSDLKJF
   access:
-    expiration: 60000
+    expiration: 86400000
     header: Authorization
   refresh:
     expiration: 1209600000
