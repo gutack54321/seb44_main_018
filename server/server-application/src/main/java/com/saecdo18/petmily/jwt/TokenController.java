@@ -2,6 +2,7 @@ package com.saecdo18.petmily.jwt;
 
 import com.saecdo18.petmily.util.AuthenticationGetMemberId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/refresh")
 @RequiredArgsConstructor
+@Slf4j
 public class TokenController {
 
     private final AuthenticationGetMemberId authenticationGetMemberId;
@@ -16,7 +18,11 @@ public class TokenController {
     @PostMapping
     public ResponseEntity<TokenDto> reIssuance(@RequestBody ReTokenDto reIssuanceTokenDto) {
         long memberId = authenticationGetMemberId.getMemberId();
+        log.info("memberId extract : {}", tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get());
+        log.info("real memberId : {}", memberId);
+
         if(tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get() != memberId)
+
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         if(!tokenProvider.isTokenValid(reIssuanceTokenDto.refreshToken))

@@ -49,14 +49,6 @@ public class SecurityConfiguration {
                         "/swagger-resources/**","/v2/api-docs","/v3/api-docs",
                         "/members/nickname-check/**","/mychatt", "/**").permitAll()
                 .anyRequest().authenticated();
-//            .and()
-//
-//                .oauth2Login()
-//                .userInfoEndpoint()
-//                .userService(customOAuth2UserService)
-//
-//                .and()
-//                .successHandler(oAuth2SuccessHandler);
         http.addFilterAfter(jwtAuthenticationFilter, CorsFilter.class);
 
         return http.build();
