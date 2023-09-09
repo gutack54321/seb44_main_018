@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
+@Setter
 public class ReTokenDto {
     String accessToken;
     String refreshToken;

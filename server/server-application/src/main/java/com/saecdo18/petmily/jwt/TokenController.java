@@ -8,23 +8,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Slf4j
 @RequestMapping("/refresh")
 @RequiredArgsConstructor
-@Slf4j
 public class TokenController {
 
     private final AuthenticationGetMemberId authenticationGetMemberId;
     private final TokenProvider tokenProvider;
     @PostMapping
     public ResponseEntity<TokenDto> reIssuance(@RequestBody ReTokenDto reIssuanceTokenDto) {
-        long memberId = authenticationGetMemberId.getMemberId();
-        log.info("memberId extract : {}", tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get());
-        log.info("real memberId : {}", memberId);
-
-        if(tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get() != memberId)
-
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
+        long memberId = tokenProvider.extractMemberId(reIssuanceTokenDto.accessToken).get();
         if(!tokenProvider.isTokenValid(reIssuanceTokenDto.refreshToken))
             return new ResponseEntity<>(TokenDto.builder().message("재로그인이 필요합니다.").build(), HttpStatus.OK);
 
